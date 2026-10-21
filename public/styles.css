@@ -426,6 +426,24 @@ main {
   flex: 0 0 auto;
 }
 
+/* The notification toggle reads as "on" by filling in, the way a stamped box
+   would be filled in. */
+.btn--small.is-on {
+  background: var(--print);
+  color: var(--paper);
+  border-color: var(--print);
+}
+
+.btn--small.is-on:hover {
+  background: var(--print);
+  opacity: 0.86;
+}
+
+.btn--small:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .row {
   display: flex;
   align-items: center;

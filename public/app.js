@@ -409,6 +409,125 @@ function escapeHtml(text) {
   })[c]);
 }
 
+/* -------------------------------------------------------------------- push */
+
+/** base64url VAPID key → the Uint8Array pushManager wants. */
+function urlBase64ToUint8Array(base64) {
+  const padded = base64.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function pushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+async function registerWorker() {
+  return navigator.serviceWorker.register('/sw.js', { scope: '/' });
+}
+
+/**
+ * Resolve with the promise, or reject after `ms`.
+ *
+ * The browser permission prompt is the one thing here that a page cannot
+ * control: if it is dismissed without an answer, or the tab loses focus while
+ * it is open, the promise can sit unresolved forever and leave the button
+ * frozen on "Turning on…". A timeout turns that into an honest failure.
+ */
+function withTimeout(promise, ms, code = 'timeout') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(Object.assign(new Error(code), { code })), ms),
+    ),
+  ]);
+}
+
+/**
+ * Turn notifications on for this box.
+ *
+ * Everything here is owner-side: the box id and the owner token are both
+ * already in the page, so no new identity is created. The subscription is the
+ * browser's own push endpoint — nothing about the person holding the phone.
+ */
+async function enablePush(boxId, ownerToken) {
+  if (!pushSupported()) {
+    throw Object.assign(new Error('unsupported'), { code: 'unsupported' });
+  }
+
+  // Asking when the answer is already known wastes the one prompt the browser
+  // will show without complaint.
+  const permission =
+    Notification.permission === 'granted'
+      ? 'granted'
+      : await withTimeout(Notification.requestPermission(), 20_000, 'permission_timeout');
+
+  if (permission !== 'granted') {
+    throw Object.assign(new Error('denied'), { code: 'denied' });
+  }
+
+  const registration = await registerWorker();
+  await navigator.serviceWorker.ready;
+
+  const { publicKey } = await api('/api/push/key');
+
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+  }
+
+  const json = subscription.toJSON();
+  await api(`/api/boxes/${encodeURIComponent(boxId)}/push`, {
+    method: 'POST',
+    body: {
+      ownerToken,
+      subscription: { endpoint: json.endpoint, keys: json.keys },
+    },
+  });
+
+  return subscription;
+}
+
+async function disablePush(boxId, ownerToken) {
+  const registration = await navigator.serviceWorker.getRegistration('/');
+  const subscription = await registration?.pushManager.getSubscription();
+  if (!subscription) return;
+
+  await api(`/api/boxes/${encodeURIComponent(boxId)}/push`, {
+    method: 'DELETE',
+    body: { ownerToken, endpoint: subscription.endpoint },
+  });
+  await subscription.unsubscribe();
+}
+
+/**
+ * Whether this browser already has notifications on.
+ *
+ * Read from the browser, not the server. If they disagree — the server
+ * dropped the subscription, or the browser has one the server never saw —
+ * turning it on again re-sends it, which reconciles both. Cheaper and more
+ * honest than asking the server to confirm a fact only the browser knows.
+ */
+async function pushState() {
+  if (!pushSupported()) return 'unsupported';
+  if (Notification.permission === 'denied') return 'blocked';
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    const subscription = await registration?.pushManager.getSubscription();
+    return subscription ? 'on' : 'off';
+  } catch {
+    // A worker that failed to register is not an error the owner can act on;
+    // treat it as "off" so the button stays usable.
+    return 'off';
+  }
+}
+
 function sentView(box) {
   screen(
     el('div', { class: 'card sent' }, [
@@ -455,6 +574,10 @@ async function inboxView(id) {
 
 async function loadInbox(id, ownerToken) {
   try {
+    // Registering early means the toggle works on the first click, and a push
+    // that arrives while the inbox is open still reaches the worker.
+    if (pushSupported()) registerWorker().catch(() => {});
+
     const data = await api(`/api/boxes/${encodeURIComponent(id)}/inbox`, {
       method: 'POST',
       body: { ownerToken },
@@ -492,6 +615,59 @@ async function loadInbox(id, ownerToken) {
 function renderInbox(id, ownerToken, { box, messages }) {
   const visible = messages.filter((m) => !m.flagged);
   const flagged = messages.filter((m) => m.flagged);
+
+  const alertBtn = el('button', {
+    class: 'btn btn--ghost btn--small',
+    type: 'button',
+    text: 'Notify me',
+  });
+
+  // Reflect the real state on first paint. The button already reads "Notify me",
+  // so a slow or failed check leaves a usable control rather than a dead label.
+  pushState()
+    .then((state) => {
+      const labels = {
+        on: 'Notifications on',
+        off: 'Notify me',
+        blocked: 'Notifications blocked',
+        unsupported: 'Not supported here',
+      };
+      alertBtn.textContent = labels[state] ?? 'Notify me';
+      alertBtn.classList.toggle('is-on', state === 'on');
+      if (state === 'blocked' || state === 'unsupported') {
+        alertBtn.disabled = true;
+        alertBtn.title =
+          state === 'blocked'
+            ? 'Allow notifications for this site in your browser settings'
+            : 'This browser cannot receive push notifications';
+      }
+    })
+    .catch(() => {});
+
+  alertBtn.addEventListener('click', async () => {
+    alertBtn.disabled = true;
+    const wasOn = alertBtn.classList.contains('is-on');
+    alertBtn.textContent = wasOn ? 'Turning off…' : 'Turning on…';
+
+    try {
+      if (wasOn) await disablePush(id, ownerToken);
+      else await enablePush(id, ownerToken);
+      await loadInbox(id, ownerToken);
+    } catch (err) {
+      alertBtn.disabled = false;
+      if (err?.code === 'denied') {
+        alertBtn.textContent = 'Notifications blocked';
+        alertBtn.title = 'Allow notifications for this site in your browser settings';
+      } else if (err?.code === 'permission_timeout') {
+        alertBtn.textContent = 'No answer — retry';
+        alertBtn.title = 'The browser never answered the permission prompt';
+      } else if (err?.code === 'unsupported') {
+        alertBtn.textContent = 'Not supported here';
+      } else {
+        alertBtn.textContent = 'Try again';
+      }
+    }
+  });
 
   const refresh = el('button', { class: 'btn btn--ghost btn--small', type: 'button', text: 'Refresh' });
   refresh.addEventListener('click', async () => {
@@ -551,7 +727,7 @@ function renderInbox(id, ownerToken, { box, messages }) {
       el('span', { class: `badge${box.open ? '' : ' badge--closed'}`, text: box.open ? 'open' : 'closed' }),
     ]),
     el('div', { class: 'share-box' }, [shareInput, copyShare]),
-    el('div', { class: 'toolbar' }, [refresh, closeBtn]),
+    el('div', { class: 'toolbar' }, [refresh, alertBtn, closeBtn]),
     notes,
     el('p', {
       class: 'fineprint',

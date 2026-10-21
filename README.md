@@ -27,6 +27,44 @@ and nothing to reset.
 
 ---
 
+## Notifications
+
+An inbox you have to remember to check is an inbox you stop checking. So the
+owner can turn on push for their box from the inbox screen — one button, no
+account, no email.
+
+Three decisions shape it:
+
+**The notification carries no content.** It says *"a slip arrived"* and
+*"someone wrote to you"*. Nothing else. A push renders on a lock screen, in
+front of whoever is holding the phone, so putting the message text in it would
+undo the product on the one surface the owner does not control.
+
+**The VAPID keypair bootstraps itself.** Normally you generate a keypair, paste
+it into the host's dashboard as secrets, and hope nobody rotates it. Hush
+generates one on the first request that needs it, writes it to Blobs, and every
+later request reads the same pair. Nothing to configure, nothing in the repo.
+
+**Dead subscriptions are deleted, not retried.** A push service answers `410`
+when a device has cleared its site data or rotated its endpoint. Those records
+are removed immediately — otherwise every future message pays for a corpse.
+Transient failures (rate limits, timeouts) keep the subscription so the next
+message can try again.
+
+What is stored per device: the push endpoint, its two public keys, and when it
+was added. No IP, no user agent, no identifier that ties it to a person. The
+endpoint itself is issued by the browser's push service, not by Hush.
+
+### The permission prompt is a trap
+
+`Notification.requestPermission()` is the one thing on the page a browser will
+not let code control. If the prompt is dismissed without an answer, or the tab
+changes focus while it is open, the promise can sit unresolved forever and
+leave the button frozen on *"Turning on…"*. Hush races it against a 20-second
+timeout and reports *"No answer — retry"*, so the control always comes back.
+
+---
+
 ## Why it looks like this
 
 The whole interface is a **till receipt on thermal paper, sitting on a dark
@@ -130,7 +168,7 @@ threat.
 git clone https://github.com/danielol237/hush.git
 cd hush
 npm install
-npm test          # 46 tests
+npm test          # 79 tests
 ```
 
 ### Deploy to Netlify
@@ -160,6 +198,9 @@ account behind it is active, and redeploying from this repo takes a minute.
 | `POST` | `/api/boxes/:id/inbox` | owner token | Read all messages |
 | `POST` | `/api/boxes/:id/close` | owner token | Toggle open/closed |
 | `DELETE` | `/api/boxes/:id/messages/:messageId` | owner token | Delete one message |
+| `GET` | `/api/push/key` | — | VAPID public key |
+| `POST` | `/api/boxes/:id/push` | owner token | Subscribe this device |
+| `DELETE` | `/api/boxes/:id/push` | owner token | Unsubscribe this device |
 
 The owner token travels in the request body, and in the browser it lives in the
 URL fragment (`#t=...`) — the part of a URL browsers never send to a server — so
@@ -180,15 +221,19 @@ it stays out of logs and referrer headers.
 src/
   core.mjs       store, moderation, validation, token hashing
   api.mjs        HTTP contract as a factory over any blob store
+  push.mjs       VAPID bootstrap, subscriptions, fan-out
 netlify/
   functions/api.mjs   thin wrapper supplying the real Blobs store
 public/
   index.html     app shell
   app.js         three views + router
+  sw.js          service worker: receives a push, shows it
   styles.css     paper-and-ink visual system
 test/
   core.test.mjs  store, moderation, validation, tokens, limiter
   api.test.mjs   the full HTTP contract
+  push.test.mjs      vapid bootstrap, subscription lifecycle, fan-out
+  pushApi.test.mjs   the push endpoints end to end
   fakeBlobs.mjs  in-memory blob store for tests
 ```
 

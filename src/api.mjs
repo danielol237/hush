@@ -14,6 +14,13 @@ import {
   verifyOwnerToken,
   MAX_MESSAGES_PER_BOX,
 } from './core.mjs';
+import {
+  getVapidKeys,
+  saveSubscription,
+  removeSubscription,
+  notifyBox,
+  isValidSubscription,
+} from './push.mjs';
 
 export const SECURITY_HEADERS = {
   'Content-Security-Policy': [
@@ -68,9 +75,20 @@ async function readJson(req) {
  * @param {object} options
  * @param {{get:Function,set:Function,setJSON:Function,delete:Function,list:Function}} options.blobs
  */
-export function createHushHandler({ blobs, now = () => Date.now(), limit = 6 } = {}) {
+export function createHushHandler({
+  blobs,
+  now = () => Date.now(),
+  limit = 6,
+  generateVapidKeys,
+  sendPush,
+} = {}) {
   const store = new HushStore(blobs, { now });
   const limiter = new MinuteLimiter(blobs, { limit, now });
+
+  // Push is optional: without a key generator and a sender the app works
+  // exactly as before, it just never notifies. That keeps local dev and the
+  // test suite free of web-push.
+  const pushEnabled = typeof generateVapidKeys === 'function' && typeof sendPush === 'function';
 
   return async function handler(req) {
     const url = new URL(req.url);
@@ -131,6 +149,15 @@ export function createHushHandler({ blobs, now = () => Date.now(), limit = 6 } =
         }
 
         await store.addMessage(boxId, text.value);
+
+        // Notify in the background: a slow or failing push service must never
+        // hold up the sender's confirmation.
+        if (pushEnabled) {
+          notifyBox(blobs, boxId, sendPush, { count: 1 }).catch((err) => {
+            console.error('[hush] notify failed', err?.message);
+          });
+        }
+
         // Identical response for every sender, always. Nothing about who sent it.
         return json(201, { ok: true });
       }
@@ -204,6 +231,54 @@ export function createHushHandler({ blobs, now = () => Date.now(), limit = 6 } =
 
         await store.deleteMessage(target.key);
         return json(200, { ok: true });
+      }
+
+      // ---- push: public key --------------------------------------------
+      if (path === '/push/key' && req.method === 'GET') {
+        if (!pushEnabled) return json(503, { error: 'push_unavailable' });
+        const keys = await getVapidKeys(blobs, generateVapidKeys);
+        return json(200, { publicKey: keys.publicKey });
+      }
+
+      // ---- push: subscribe / unsubscribe -------------------------------
+      const subMatch = /^\/boxes\/([A-Za-z0-9_-]{1,64})\/push$/.exec(path);
+      if (subMatch) {
+        const box = await store.getBox(subMatch[1]);
+        if (!box) return json(404, { error: 'not_found' });
+
+        const parsed = await readJson(req);
+        if (parsed.error) return json(400, { error: parsed.error });
+
+        if (!verifyOwnerToken(parsed.value?.ownerToken ?? '', box.ownerHash)) {
+          return json(403, { error: 'bad_token' });
+        }
+
+        if (!pushEnabled) return json(503, { error: 'push_unavailable' });
+
+        if (req.method === 'POST') {
+          const subscription = parsed.value?.subscription;
+          if (!isValidSubscription(subscription)) {
+            return json(400, { error: 'invalid_subscription' });
+          }
+          try {
+            const result = await saveSubscription(blobs, subMatch[1], subscription);
+            return json(200, result);
+          } catch (err) {
+            if (err?.code === 'too_many_subscriptions') {
+              return json(409, { error: 'too_many_subscriptions' });
+            }
+            throw err;
+          }
+        }
+
+        if (req.method === 'DELETE') {
+          const endpoint = parsed.value?.endpoint;
+          if (typeof endpoint !== 'string') return json(400, { error: 'missing_endpoint' });
+          const result = await removeSubscription(blobs, subMatch[1], endpoint);
+          return json(200, result);
+        }
+
+        return json(405, { error: 'method_not_allowed' });
       }
 
       return json(404, { error: 'not_found' });

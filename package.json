@@ -9,7 +9,8 @@
     "test:coverage": "node --test --experimental-test-coverage test/"
   },
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@netlify/blobs": "^8.1.0",
+    "web-push": "^3.6.7"
   },
   "engines": {
     "node": ">=18.17"
