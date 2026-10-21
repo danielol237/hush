@@ -599,7 +599,8 @@ main {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-top: 8px;
+  margin-bottom: 22px;
 }
 
 /* Each message is its own small slip, torn off the roll. */

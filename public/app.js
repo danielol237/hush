@@ -516,6 +516,7 @@ function renderInbox(id, ownerToken, { box, messages }) {
   });
 
   const shareInput = el('input', { class: 'field field--mono', readonly: 'readonly', value: `${location.origin}/b/${id}` });
+  shareInput.addEventListener('focus', () => shareInput.select());
   const copyShare = el('button', { class: 'btn btn--ghost btn--small', type: 'button', text: 'Copy link' });
   copyShare.addEventListener('click', () => copyText(shareInput.value, copyShare));
 
@@ -549,7 +550,8 @@ function renderInbox(id, ownerToken, { box, messages }) {
       ]),
       el('span', { class: `badge${box.open ? '' : ' badge--closed'}`, text: box.open ? 'open' : 'closed' }),
     ]),
-    el('div', { class: 'toolbar' }, [shareInput, copyShare, refresh, closeBtn]),
+    el('div', { class: 'share-box' }, [shareInput, copyShare]),
+    el('div', { class: 'toolbar' }, [refresh, closeBtn]),
     notes,
     el('p', {
       class: 'fineprint',
