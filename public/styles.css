@@ -171,7 +171,7 @@ main {
     0 30px 60px -24px rgba(0, 0, 0, 0.95),
     0 8px 18px -10px rgba(0, 0, 0, 0.6);
   /* A sheet of paper is never perfectly square on the counter. */
-  transform: rotate(-0.6deg);
+  transform: rotate(-1deg);
 }
 
 /* Torn top edge. */
