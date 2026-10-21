@@ -2,6 +2,8 @@
 
 **One link. Anyone can write to you. You never see who.**
 
+### ▶ [Try it live → jade-kitten-a45079.netlify.app](https://jade-kitten-a45079.netlify.app)
+
 Hush is an anonymous message box. You create a box, get a link, and post it
 anywhere. People open it and type something. You read the words in a private
 inbox — never a name, a handle, an IP, or a device.
