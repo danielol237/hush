@@ -110,6 +110,9 @@ Or drag the folder onto <https://app.netlify.com/drop>.
 Netlify Blobs holds the boxes and messages, so the app survives cold starts and
 scales across regions without a database.
 
+The live demo has no expiry of its own — it stays up as long as the Netlify
+account behind it is active, and redeploying from this repo takes a minute.
+
 ---
 
 ## API
