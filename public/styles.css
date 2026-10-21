@@ -1,25 +1,31 @@
-/* Hush — warm paper, ink, one soft accent. Editorial, not app-store glossy. */
+/* Hush — the slip.
+   ------------------------------------------------------------------
+   The whole interface is a till receipt printed on thermal paper, sitting
+   in the dark. That is the metaphor and it is load-bearing: a receipt is
+   something handed to you, read once, and thrown away. It also means the
+   design has to be monochrome print on paper — no gradients, no glass, no
+   glow, no neon. The only colour is the rubber stamp, and each box gets
+   its own stamp colour so two people's links never look alike.
+
+   Everything is monospace because till printers only have one font.
+   ------------------------------------------------------------------ */
 
 :root {
-  --paper: #f6f2ea;
-  --paper-2: #fffdf8;
-  --ink: #1c1a18;
-  --ink-soft: #55504a;
-  --muted: #8a827a;
-  --line: #e2dbd0;
-  --line-strong: #cfc5b6;
-  --accent: #4a3f7a;
-  --accent-soft: #6b5ca5;
-  --accent-wash: #efecf7;
-  --warn: #a8532c;
-  --warn-wash: #fbf0e8;
-  --ok: #2f6b4f;
+  --void: #0c0e10;
+  --void-2: #14171a;
 
-  --radius: 16px;
-  --radius-sm: 10px;
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --paper: #f2efe7;
+  --paper-shade: #e4dfd3;
+  --paper-shadow: #c9c3b4;
+
+  --print: #191b1d;
+  --print-mid: #565b5e;
+  --print-faint: #8b9093;
+
+  /* Overwritten per box by app.js. Default is a rubber-stamp red. */
+  --stamp: #c2352a;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 * { box-sizing: border-box; }
@@ -29,29 +35,25 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: 16px;
+  background: var(--void);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
 }
 
-/* Faint ruled-paper texture, so the page reads as a notebook page. */
-.paper {
+/* A single warm pool of light, as if the page were on a counter under a lamp. */
+.vignette {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 31px,
-    rgba(28, 26, 24, 0.028) 31px 32px
-  );
-  mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 78%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 246, 224, 0.07), transparent 70%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0, 0, 0, 0.6), transparent 70%);
 }
 
 .top, main, .foot { position: relative; z-index: 1; }
@@ -60,42 +62,48 @@ body {
 
 .top {
   display: flex;
-  align-items: center;
-  gap: 13px;
-  max-width: 660px;
+  align-items: baseline;
+  gap: 14px;
   width: 100%;
-  margin: 0 auto;
-  padding: 24px clamp(18px, 5vw, 32px) 0;
+  padding: 26px clamp(18px, 5vw, 34px) 0;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: var(--ink);
+  gap: 9px;
+  color: var(--paper);
   text-decoration: none;
-  font-weight: 650;
-  font-size: 1.06rem;
-  letter-spacing: -0.02em;
 }
 
-.brand svg { color: var(--accent); }
+/* A single filled square — the mark, not an icon. */
+.brand-mark {
+  width: 9px;
+  height: 9px;
+  background: var(--paper);
+  display: block;
+}
+
+.brand-word {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
 
 .tag {
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--muted);
-  border-left: 1px solid var(--line-strong);
-  padding-left: 13px;
+  color: #6d7376;
 }
 
 main {
   flex: 1;
   width: 100%;
-  max-width: 660px;
+  max-width: 560px;
   margin: 0 auto;
-  padding: clamp(30px, 7vw, 60px) clamp(18px, 5vw, 32px) 40px;
+  padding: clamp(26px, 6vw, 48px) clamp(16px, 4.5vw, 28px) 40px;
 }
 
 .foot {
@@ -103,173 +111,325 @@ main {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  padding: 0 18px 28px;
-  font-size: 0.75rem;
-  color: var(--muted);
+  align-items: center;
+  padding: 0 18px 26px;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #6d7376;
 }
 
-.foot a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
-.foot a:hover { color: var(--accent); border-color: var(--accent); }
-.dot { opacity: 0.5; }
+.foot a {
+  color: var(--paper);
+  text-decoration: none;
+  border-bottom: 1px solid #6d7376;
+}
+
+.foot a:hover { color: var(--paper); border-color: var(--paper); }
 
 /* -------------------------------------------------------------------- hero */
 
-.hero { margin-bottom: clamp(24px, 5vw, 34px); }
-.hero--tight { margin-bottom: 20px; }
+.hero { margin-bottom: 22px; }
 
 .hero h1 {
-  margin: 0 0 14px;
-  font-family: var(--serif);
-  font-size: clamp(2.1rem, 7.2vw, 3.15rem);
-  line-height: 1.06;
-  letter-spacing: -0.03em;
-  font-weight: 500;
+  margin: 0 0 10px;
+  font-size: clamp(1.5rem, 6vw, 2.05rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
 .hero h1 em {
-  font-style: italic;
-  color: var(--accent);
+  font-style: normal;
+  color: var(--stamp);
+  transition: color 300ms ease;
 }
 
 .lede {
   margin: 0;
-  color: var(--ink-soft);
-  font-size: clamp(0.96rem, 2.6vw, 1.04rem);
-  max-width: 50ch;
+  font-size: 0.76rem;
+  line-height: 1.75;
+  color: #868c8f;
+  max-width: 46ch;
   text-wrap: pretty;
 }
 
-.lede--tight { margin-bottom: 18px; }
+/* ------------------------------------------------------------- the receipt */
 
-/* -------------------------------------------------------------------- card */
-
+/* Two pseudo-elements draw the torn edges: a row of triangles top and bottom. */
 .card {
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: clamp(20px, 4.5vw, 30px);
-  box-shadow: 0 1px 2px rgba(28, 26, 24, 0.04), 0 18px 40px -34px rgba(28, 26, 24, 0.4);
+  position: relative;
+  background: var(--paper);
+  color: var(--print);
+  padding: 26px 22px 24px;
+  margin: 18px 0;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 2px 0 rgba(0, 0, 0, 0.25),
+    0 30px 60px -24px rgba(0, 0, 0, 0.95),
+    0 8px 18px -10px rgba(0, 0, 0, 0.6);
+  /* A sheet of paper is never perfectly square on the counter. */
+  transform: rotate(-0.6deg);
 }
+
+/* Torn top edge. */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -9px;
+  height: 10px;
+  background:
+    linear-gradient(-45deg, var(--paper) 5px, transparent 0) 0 0 / 12px 12px repeat-x,
+    linear-gradient(45deg, var(--paper) 5px, transparent 0) 0 0 / 12px 12px repeat-x;
+  background-position: 0 0, 6px 0;
+}
+
+/* Torn bottom edge. */
+.card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -9px;
+  height: 10px;
+  background:
+    linear-gradient(-135deg, var(--paper) 5px, transparent 0) 0 0 / 12px 12px repeat-x,
+    linear-gradient(135deg, var(--paper) 5px, transparent 0) 0 0 / 12px 12px repeat-x;
+  background-position: 0 0, 6px 0;
+}
+
+/* The stamp. Sits over the top-right corner, slightly off-square, because a
+   stamp is never pressed perfectly straight. */
+.card > .stamp,
+.card[data-stamp]::after {
+  content: none;
+}
+
+.stamp {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 3px 8px;
+  border: 2px solid var(--stamp);
+  color: var(--stamp);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: rotate(-7deg);
+  opacity: 0.9;
+  pointer-events: none;
+  transition: border-color 300ms ease, color 300ms ease;
+  white-space: nowrap;
+  /* Keeps the stamp clear of the reference number on narrow screens. */
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Printed header: mark on the left, reference on the right. */
+.slip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.slip-mark {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--print);
+}
+
+.slip-ref {
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--print-faint);
+}
+
+/* --------------------------------------------------------------- print rules */
 
 .label {
   display: block;
-  font-size: 0.72rem;
-  letter-spacing: 0.11em;
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 8px;
-  font-weight: 650;
+  color: var(--print-mid);
+  margin-bottom: 6px;
 }
 
 .stack { display: flex; flex-direction: column; }
 .stack + .stack { margin-top: 18px; }
 
-/* ------------------------------------------------------------------ fields */
-
-.field {
-  width: 100%;
-  background: var(--paper);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  color: var(--ink);
-  font-family: inherit;
-  font-size: 1rem;
-  padding: 13px 15px;
-  transition: border-color 130ms ease, box-shadow 130ms ease, background 130ms ease;
+/* A dashed rule, the way a receipt separates two sections. */
+.rule {
+  border: 0;
+  border-top: 1px dashed var(--paper-shadow);
+  margin: 18px 0;
 }
 
-.field::placeholder { color: #a89f94; }
+/* ------------------------------------------------------------------ fields */
+
+/* Inputs are form lines on the slip, not boxes. */
+.field {
+  width: 100%;
+  background: rgba(25, 27, 29, 0.035);
+  border: 0;
+  border-bottom: 1.5px solid var(--paper-shadow);
+  border-radius: 0;
+  color: var(--print);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  padding: 8px 9px;
+  transition: border-color 140ms ease;
+}
+
+.field::placeholder { color: #837c6d; }
 
 .field:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--paper-2);
-  box-shadow: 0 0 0 3px rgba(74, 63, 122, 0.12);
+  border-bottom-color: var(--print);
+  background: rgba(25, 27, 29, 0.06);
 }
 
 .field--area {
   resize: vertical;
-  min-height: 118px;
-  line-height: 1.62;
-  font-family: var(--serif);
-  font-size: 1.06rem;
+  min-height: 96px;
+  line-height: 1.7;
+  border: 1.5px solid var(--paper-shadow);
+  padding: 10px 11px;
+  /* Ruled paper, so it reads as a form you fill in by hand. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 26px,
+    rgba(25, 27, 29, 0.1) 26px 27px
+  );
+  background-position: 0 10px;
 }
 
+.field--area:focus { border-color: var(--print); }
+
 .field--mono {
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  color: var(--accent);
+  font-size: 0.7rem;
+  color: var(--print-mid);
+  text-overflow: ellipsis;
 }
 
 .counter {
   align-self: flex-end;
-  margin-top: 6px;
-  font-size: 0.73rem;
-  color: var(--muted);
+  margin-top: 5px;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--print-faint);
   font-variant-numeric: tabular-nums;
 }
 
-.counter.is-near { color: var(--warn); }
+.counter.is-near { color: var(--stamp); }
+
+/* ---------------------------------------------------------------- presets */
+
+.chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.chip {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--paper-shadow);
+  color: var(--print-mid);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  line-height: 1.3;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 0;
+  text-align: left;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+/* Odd number of presets: let the last one span both columns so the block
+   closes on a clean edge instead of a lonely half-width button. */
+.chip:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+.chip:hover {
+  border-color: var(--print);
+  color: var(--print);
+  background: rgba(25, 27, 29, 0.04);
+}
+
+.chip:focus-visible { outline: 2px solid var(--print); outline-offset: 1px; }
 
 /* ----------------------------------------------------------------- buttons */
 
 .btn {
   appearance: none;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 13px 20px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  border: 0;
+  border-radius: 0;
+  background: var(--print);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 15px 20px;
   cursor: pointer;
-  transition: transform 80ms ease, filter 130ms ease, background 130ms ease, color 130ms ease;
+  transition: opacity 120ms ease, transform 70ms ease, background 120ms ease;
 }
 
 .btn:active { transform: translateY(1px); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
 
 .btn--primary {
   width: 100%;
-  margin-top: 20px;
-  background: var(--accent);
-  color: #fbfaff;
-  box-shadow: 0 10px 24px -16px rgba(74, 63, 122, 0.9);
+  margin-top: 24px;
 }
 
-.btn--primary:hover { filter: brightness(1.1); }
+.btn--primary:hover { opacity: 0.86; }
 
 .btn--primary:disabled {
   cursor: progress;
-  opacity: 0.62;
-  box-shadow: none;
+  background: var(--paper-shadow);
+  color: var(--print-mid);
 }
 
-.btn--primary.is-done { background: var(--ok); }
+.btn--primary.is-done { background: var(--print); }
 
+/* Ghost buttons print as an outline — the way a form marks an optional line. */
 .btn--ghost {
   width: 100%;
   margin-top: 10px;
   background: transparent;
-  border-color: var(--line-strong);
-  color: var(--ink-soft);
+  color: var(--print);
+  border: 1.5px solid var(--print);
 }
 
-.btn--ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
+.btn--ghost:hover { background: rgba(25, 27, 29, 0.06); opacity: 1; }
 
 .btn--small {
   width: auto;
   margin: 0;
-  padding: 8px 14px;
-  font-size: 0.84rem;
-  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  flex: 0 0 auto;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 14px;
   flex-wrap: wrap;
 }
@@ -281,123 +441,115 @@ main {
 .slot:empty { display: none; }
 
 .notice {
-  margin: 16px 0 0;
-  padding: 12px 15px;
-  border-radius: var(--radius-sm);
-  font-size: 0.88rem;
-  border: 1px solid rgba(168, 83, 44, 0.28);
-  background: var(--warn-wash);
-  color: var(--warn);
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--print);
+  border-left: 3px solid var(--print);
+  background: rgba(25, 27, 29, 0.06);
 }
 
-.notice--ok {
-  border-color: rgba(47, 107, 79, 0.26);
-  background: rgba(47, 107, 79, 0.07);
-  color: var(--ok);
-}
+.notice--info { border-left-color: var(--print-faint); color: var(--print-mid); }
 
-.notice--info {
-  border-color: var(--line-strong);
-  background: var(--accent-wash);
-  color: var(--accent);
-}
-
-/* ------------------------------------------------------------------ create */
-
-.hero-name {
-  font-family: var(--serif);
-  font-style: italic;
-  color: var(--accent);
-}
-
-/* -------------------------------------------------------------------- link */
+/* --------------------------------------------------------------- share view */
 
 .share-box {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   align-items: stretch;
 }
 
 .share-box .field { flex: 1; min-width: 0; }
 
 .fineprint {
-  margin: 18px 0 0;
-  font-size: 0.8rem;
-  color: var(--muted);
-  line-height: 1.6;
+  margin: 16px 0 0;
+  font-size: 0.64rem;
+  line-height: 1.8;
+  color: var(--print-faint);
 }
 
 .warn-list {
   list-style: none;
-  margin: 20px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   display: grid;
-  gap: 9px;
+  gap: 8px;
 }
 
 .warn-list li {
   position: relative;
-  padding-left: 19px;
-  font-size: 0.86rem;
-  color: var(--ink-soft);
+  padding-left: 17px;
+  font-size: 0.68rem;
+  line-height: 1.7;
+  color: var(--print-mid);
   text-wrap: pretty;
 }
 
+/* A printed bullet: a small filled square, like a dot-matrix marker. */
 .warn-list li::before {
   content: "";
   position: absolute;
-  left: 3px;
-  top: 0.62em;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent-soft);
+  left: 1px;
+  top: 0.66em;
+  width: 4px;
+  height: 4px;
+  background: var(--print);
 }
 
 /* --------------------------------------------------------------- send view */
 
-.send-card .prompt-line {
-  margin: 0 0 22px;
-  font-family: var(--serif);
-  font-size: clamp(1.25rem, 4.4vw, 1.6rem);
-  line-height: 1.35;
+.recipient {
+  margin: 0 0 4px;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--print-faint);
+}
+
+.recipient strong {
+  color: var(--print);
+  font-weight: 700;
+}
+
+.prompt-line {
+  margin: 0 0 20px;
+  font-size: clamp(1.05rem, 4vw, 1.32rem);
+  line-height: 1.3;
   letter-spacing: -0.015em;
-  color: var(--ink);
+  font-weight: 700;
+  color: var(--print);
   text-wrap: balance;
 }
 
-.recipient {
-  font-size: 0.82rem;
-  color: var(--muted);
-  margin: 0 0 18px;
-}
-
-.recipient strong { color: var(--ink); font-weight: 650; }
-
-.sent {
-  text-align: center;
-  padding: 14px 0 4px;
-}
+.sent { text-align: center; padding: 6px 0 0; }
 
 .sent-mark {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   margin: 0 auto 16px;
-  border-radius: 50%;
-  background: var(--accent-wash);
-  color: var(--accent);
+  border: 2px solid var(--stamp);
   display: grid;
   place-items: center;
+  color: var(--stamp);
+  transform: rotate(-4deg);
 }
 
 .sent h2 {
   margin: 0 0 8px;
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--print);
 }
 
-.sent p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+.sent p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.75;
+  color: var(--print-mid);
+}
 
 /* ------------------------------------------------------------------- inbox */
 
@@ -405,162 +557,194 @@ main {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .inbox-head h1 {
   margin: 0;
-  font-family: var(--serif);
-  font-size: clamp(1.7rem, 5.6vw, 2.2rem);
-  font-weight: 500;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.3rem, 5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 .inbox-head .meta {
   margin: 5px 0 0;
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #868c8f;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--accent-wash);
-  color: var(--accent);
+  padding: 4px 8px;
+  border: 1.5px solid var(--stamp);
+  color: var(--stamp);
   white-space: nowrap;
+  transform: rotate(-2deg);
 }
 
-.badge--closed { background: #f0ece5; color: var(--muted); }
+.badge--closed { border-color: #565c5f; color: #868c8f; }
 
 .toolbar {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
-.notes { display: grid; gap: 12px; }
-
-.section-label {
-  margin: 14px 0 2px;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--warn);
-}
+/* Each message is its own small slip, torn off the roll. */
+.notes { display: grid; gap: 18px; }
 
 .note {
   position: relative;
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: 0 1px 2px rgba(28, 26, 24, 0.03);
+  background: var(--paper);
+  color: var(--print);
+  padding: 16px 16px 13px;
+  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.9);
 }
 
-.note--flagged {
-  border-color: rgba(168, 83, 44, 0.3);
-  background: var(--warn-wash);
+/* A stack of slips is never perfectly aligned. */
+.note:nth-child(3n + 1) { transform: rotate(-0.4deg); }
+.note:nth-child(3n + 2) { transform: rotate(0.3deg); }
+
+.note::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 7px;
+  background:
+    linear-gradient(-45deg, var(--paper) 3.5px, transparent 0) 0 0 / 9px 9px repeat-x,
+    linear-gradient(45deg, var(--paper) 3.5px, transparent 0) 0 0 / 9px 9px repeat-x;
+  background-position: 0 0, 4.5px 0;
 }
+
+.note::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 7px;
+  background:
+    linear-gradient(-135deg, var(--paper) 3.5px, transparent 0) 0 0 / 9px 9px repeat-x,
+    linear-gradient(135deg, var(--paper) 3.5px, transparent 0) 0 0 / 9px 9px repeat-x;
+  background-position: 0 0, 4.5px 0;
+}
+
+.note--flagged { background: #efe7d6; }
 
 .note-text {
   margin: 0;
-  font-family: var(--serif);
-  font-size: 1.06rem;
-  line-height: 1.6;
+  font-size: 0.86rem;
+  line-height: 1.72;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  color: var(--print);
 }
 
 .note-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 14px;
-  font-size: 0.74rem;
-  color: var(--muted);
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--paper-shadow);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--print-faint);
 }
 
-.note-flag {
-  color: var(--warn);
-  font-weight: 600;
-}
+.note-flag { color: var(--stamp); font-weight: 700; }
 
 .icon-btn {
   appearance: none;
   background: none;
-  border: none;
-  padding: 4px 6px;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 0.74rem;
+  border: 0;
+  padding: 2px 0;
+  color: var(--print-faint);
   font-family: inherit;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   cursor: pointer;
+  border-bottom: 1px solid transparent;
 }
 
-.icon-btn:hover { color: var(--warn); background: rgba(168, 83, 44, 0.08); }
-.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.icon-btn:hover { color: var(--stamp); border-color: var(--stamp); }
+.icon-btn:focus-visible { outline: 2px solid var(--print); outline-offset: 2px; }
 
 .empty {
+  padding: 34px 18px;
   text-align: center;
-  padding: 44px 20px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  color: var(--muted);
+  border: 1.5px dashed #3a3f42;
+  color: #7c8285;
+  font-size: 0.72rem;
+  line-height: 1.8;
 }
 
 .empty strong {
   display: block;
-  font-family: var(--serif);
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--ink-soft);
-  margin-bottom: 6px;
+  font-size: 0.86rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  margin-bottom: 5px;
 }
 
 /* ------------------------------------------------------------------- facts */
 
 .facts {
   display: grid;
-  gap: 1px;
-  margin-top: clamp(30px, 6vw, 44px);
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
+  gap: 0;
+  margin-top: 30px;
+  border-top: 1px solid #23282b;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 560px) {
   .facts { grid-template-columns: repeat(3, 1fr); }
 }
 
-.fact { background: var(--paper); padding: 20px; }
+.fact {
+  padding: 16px 14px 16px 0;
+  border-bottom: 1px solid #23282b;
+}
+
+@media (min-width: 560px) {
+  .fact + .fact {
+    padding-left: 14px;
+    border-left: 1px solid #23282b;
+  }
+}
 
 .fact h2 {
-  margin: 0 0 7px;
-  font-size: 0.73rem;
-  letter-spacing: 0.11em;
+  margin: 0 0 6px;
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--accent);
-  font-weight: 650;
+  color: var(--stamp);
+  font-weight: 700;
+  transition: color 300ms ease;
 }
 
 .fact p {
   margin: 0;
-  font-size: 0.83rem;
-  line-height: 1.58;
-  color: var(--ink-soft);
+  font-size: 0.68rem;
+  line-height: 1.7;
+  color: #868c8f;
   text-wrap: pretty;
 }
 

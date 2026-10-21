@@ -27,6 +27,41 @@ and nothing to reset.
 
 ---
 
+## Why it looks like this
+
+The whole interface is a **till receipt on thermal paper, sitting on a dark
+counter**. That is not decoration — it is the argument. A receipt is something
+handed to you, read once, and thrown away, which is exactly what an anonymous
+message is. The metaphor does the explaining that copy usually has to.
+
+It also rules out the obvious direction. Every anonymous-message app ships the
+same surface: neon gradient, glassy rounded cards, 3D stickers, pill buttons.
+That language is now so common that it reads as a template — and a template
+asks for less trust, not more, from an app whose entire promise is discretion.
+
+So the constraints here are deliberately tight:
+
+- **Monochrome print.** Till printers have one colour. Everything is
+  monospace on cream, with the same dot-matrix grammar a receipt uses —
+  dashed rules, a reference number, tiny letter-spaced caps.
+- **One colour, and it is the stamp.** Each box derives its own stamp colour
+  from its id, so two people's links never look alike in a feed. Nothing else
+  on the page is coloured.
+- **Physical, not flat.** The slip is rotated a fraction of a degree and casts
+  a shadow, because paper on a counter is never perfectly square. The message
+  slips in the inbox each sit at a slightly different angle for the same
+  reason.
+- **Torn edges, not rounded corners.** The top and bottom of every slip are
+  torn with a repeating zigzag. Nothing on the page has a border radius.
+- **No stock art.** No 3D hands, no stickers, no gradients. The only mark is a
+  nine-pixel filled square.
+
+The prompt presets on the create screen exist for a product reason too: a blank
+"ask me anything" is a decision, and most people will not make one. Five
+concrete questions turn an empty box into a tap.
+
+---
+
 ## The anonymity claim, precisely
 
 This is the part most anonymous apps are vague about, so here is the exact

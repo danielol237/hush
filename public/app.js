@@ -26,6 +26,30 @@ async function api(path, { method = 'GET', body } = {}) {
 
 /* --------------------------------------------------------------------- dom */
 
+/**
+ * Every box gets its own accent hue, derived from its id.
+ *
+ * Deterministic — the same link always looks the same — but different people's
+ * links are visually distinct, which is the whole point of posting one in a
+ * story feed. Hues are picked from a hand-tuned set rather than spread evenly
+ * around the wheel: full-spectrum rotation produces yellows and greens that
+ * wash out on near-black.
+ */
+const SIGNAL_HUES = [74, 96, 148, 172, 194, 214, 258, 286, 320, 340, 8, 26];
+
+function signalFor(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  const hue = SIGNAL_HUES[hash % SIGNAL_HUES.length];
+  return `hsl(${hue} 92% 62%)`;
+}
+
+function applySignal(id) {
+  const root = document.documentElement;
+  if (id) root.style.setProperty('--signal', signalFor(id));
+  else root.style.removeProperty('--signal');
+}
+
 function el(tag, props = {}, children = []) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(props)) {
@@ -97,9 +121,25 @@ function fact(title, body) {
   return el('article', { class: 'fact' }, [el('h2', { text: title }), el('p', { text: body })]);
 }
 
+/**
+ * The printed header at the top of every slip: the mark, a reference number,
+ * and a dashed rule. Real receipts always carry this, and it is what makes the
+ * paper read as a receipt rather than a card.
+ */
+function slipHead(reference) {
+  return [
+    el('div', { class: 'slip-head' }, [
+      el('span', { class: 'slip-mark', text: 'hush' }),
+      el('span', { class: 'slip-ref', text: reference }),
+    ]),
+    el('hr', { class: 'rule' }),
+  ];
+}
+
 /* ------------------------------------------------------------------ create */
 
 function createView() {
+  applySignal(null);
   const name = el('input', {
     id: 'name',
     class: 'field',
@@ -117,10 +157,39 @@ function createView() {
     placeholder: 'Send me something you would not say out loud.',
   });
 
+  // Prompt presets. These are the difference between a link nobody clicks and
+  // one that gets answered: a blank "ask me anything" is a decision, and most
+  // people will not make one.
+  const PRESETS = [
+    'what do you actually think of me?',
+    'one thing you never said to my face',
+    'describe me in three words',
+    'a secret you are carrying',
+    'what should I stop doing?',
+  ];
+
+  const chips = el(
+    'div',
+    { class: 'chips' },
+    PRESETS.map((preset) =>
+      el('button', {
+        class: 'chip',
+        type: 'button',
+        text: preset,
+        onclick: () => {
+          prompt.value = preset;
+          prompt.focus();
+        },
+      }),
+    ),
+  );
+
   const errorSlot = el('div', { class: 'slot' });
   const submit = el('button', { class: 'btn btn--primary', type: 'submit', text: 'Create my link' });
 
   const form = el('form', { class: 'card', novalidate: 'true' }, [
+    el('span', { class: 'stamp', text: 'unsigned' }),
+    ...slipHead('new slip'),
     el('div', { class: 'stack' }, [
       el('label', { class: 'label', for: 'name', text: 'What should people call you?' }),
       name,
@@ -128,6 +197,7 @@ function createView() {
     el('div', { class: 'stack' }, [
       el('label', { class: 'label', for: 'prompt', text: 'The question on your box' }),
       prompt,
+      chips,
     ]),
     errorSlot,
     submit,
@@ -186,6 +256,7 @@ function friendlyError(err) {
 /* -------------------------------------------------------------------- link */
 
 function linkView({ id, ownerToken }) {
+  applySignal(id);
   const base = `${location.origin}/b/${id}`;
   const inboxUrl = `${location.origin}/inbox/${id}#t=${ownerToken}`;
 
@@ -237,6 +308,7 @@ async function sendView(id) {
 
   try {
     const box = await api(`/api/boxes/${encodeURIComponent(id)}`);
+    applySignal(box.id);
     if (!box.open) {
       screen(
         el('section', { class: 'hero hero--tight' }, [
@@ -266,6 +338,8 @@ async function sendView(id) {
     const submit = el('button', { class: 'btn btn--primary', type: 'submit', text: 'Send anonymously' });
 
     const form = el('form', { class: 'card send-card', novalidate: 'true' }, [
+      el('span', { class: 'stamp', text: 'no name' }),
+      ...slipHead('incoming'),
       el('p', { class: 'recipient', html: `To <strong>${escapeHtml(box.name)}</strong>` }),
       el('p', { class: 'prompt-line', text: box.prompt }),
       text,
@@ -385,6 +459,7 @@ async function loadInbox(id, ownerToken) {
       method: 'POST',
       body: { ownerToken },
     });
+    applySignal(data.box.id);
     renderInbox(id, ownerToken, data);
   } catch (err) {
     if (err?.status === 403) {

@@ -3,25 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="dark">
 <meta name="referrer" content="no-referrer">
-<title>Hush — anonymous messages</title>
-<meta name="description" content="Make a link. Anyone can write to you. You see the words, never the name.">
+<title>Hush — an anonymous slip</title>
+<meta name="description" content="One link. Anyone can write to you. You read the words, never the name.">
+<meta name="theme-color" content="#0d0f11">
 <link rel="stylesheet" href="/styles.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
-<div class="paper" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
 
 <header class="top">
   <a class="brand" href="/">
-    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
-      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.4 3.3A.75.75 0 0 1 4.4 19.7V17A2.5 2.5 0 0 1 4 15.4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-      <circle cx="9" cy="10.5" r="1.15" fill="currentColor"/>
-      <circle cx="12.5" cy="10.5" r="1.15" fill="currentColor"/>
-      <circle cx="16" cy="10.5" r="1.15" fill="currentColor"/>
-    </svg>
-    <span>hush</span>
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-word">hush</span>
   </a>
   <span class="tag">no names</span>
 </header>
@@ -29,8 +25,12 @@
 <main id="app" aria-live="polite"></main>
 
 <footer class="foot">
-  <span>no accounts · no names · no IPs stored with messages</span>
-  <span class="dot" aria-hidden="true">·</span>
+  <span>no accounts</span>
+  <span aria-hidden="true">/</span>
+  <span>no names</span>
+  <span aria-hidden="true">/</span>
+  <span>no ips stored</span>
+  <span aria-hidden="true">/</span>
   <a href="https://github.com/danielol237/hush" rel="noopener noreferrer" target="_blank">source</a>
 </footer>
 
